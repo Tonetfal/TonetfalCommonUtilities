@@ -46,12 +46,14 @@ public:
 
 #pragma region Player
 	UFUNCTION(BlueprintPure="False", Category="Game|Player",
-		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
-	static TArray<APlayerController*> GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly);
+		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject", DeterminesOutputType="Class"))
+	static TArray<APlayerController*> GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly,
+		TSubclassOf<APlayerController> Class);
 
 	UFUNCTION(BlueprintPure="False", Category="Game|Player",
-		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
-	static TArray<APlayerState*> GetPlayerStates(const UObject* ContextObject, bool bLocalOnly);
+		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject", DeterminesOutputType="Class"))
+	static TArray<APlayerState*> GetPlayerStates(const UObject* ContextObject, bool bLocalOnly,
+		TSubclassOf<APlayerState> Class);
 
 	UFUNCTION(BlueprintPure="False", Category="Game|Player",
 		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject", DeterminesOutputType="Class"))

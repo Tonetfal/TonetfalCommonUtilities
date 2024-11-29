@@ -83,7 +83,8 @@ ULocalPlayer* UTCU_Library::GetTypedLocalPlayer(const UObject* ContextObject, TS
 #pragma endregion
 
 #pragma region Player
-TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly)
+TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly,
+	TSubclassOf<APlayerController> Class)
 {
 	TArray<APlayerController*> ReturnValue;
 
@@ -106,6 +107,11 @@ TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* Con
 				}
 			}
 
+			if (!PlayerController->IsA(Class))
+			{
+				continue;
+			}
+
 			ReturnValue.Add(PlayerController);
 		}
 	}
@@ -113,7 +119,8 @@ TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* Con
 	return ReturnValue;
 }
 
-TArray<APlayerState*> UTCU_Library::GetPlayerStates(const UObject* ContextObject, bool bLocalOnly)
+TArray<APlayerState*> UTCU_Library::GetPlayerStates(const UObject* ContextObject, bool bLocalOnly,
+	TSubclassOf<APlayerState> Class)
 {
 	TArray<APlayerState*> ReturnValue;
 
@@ -137,6 +144,11 @@ TArray<APlayerState*> UTCU_Library::GetPlayerStates(const UObject* ContextObject
 					{
 						continue;
 					}
+				}
+
+				if (!PlayerState->IsA(Class))
+				{
+					continue;
 				}
 
 				ReturnValue.Add(PlayerState);
