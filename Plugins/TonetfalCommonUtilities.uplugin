@@ -1,0 +1,24 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "Tonetfal's Common Utilities",
+    "Description": "",
+    "Category": "Utilities",
+    "CreatedBy": "Tonetfal",
+    "CreatedByURL": "github.com/Tonetfal",
+    "DocsURL": "https://github.com/Tonetfal/TonetfalCommonUtilities",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": true,
+    "IsBetaVersion": false,
+    "IsExperimentalVersion": false,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "TonetfalCommonUtilities",
+            "Type": "Runtime",
+            "LoadingPhase": "PreLoadingScreen"
+        }
+    ]
+}
