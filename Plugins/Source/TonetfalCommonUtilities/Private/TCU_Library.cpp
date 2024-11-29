@@ -37,26 +37,6 @@ AGameSession* UTCU_Library::GetTypedGameSession(const UObject* ContextObject, TS
 	return IsValid(GameSession) && GameSession->IsA(Class) ? GameSession : nullptr;
 }
 
-APlayerController* UTCU_Library::GetTypedPlayerController(const UObject* ContextObject,
-	TSubclassOf<APlayerController> Class, int32 PlayerIndex)
-{
-	APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
-	return IsValid(Controller) && Controller->IsA(Class) ? Controller : nullptr;
-}
-
-ULocalPlayer* UTCU_Library::GetTypedLocalPlayer(const UObject* ContextObject, TSubclassOf<ULocalPlayer> Class,
-	int32 PlayerIndex)
-{
-	const APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
-	if (!IsValid(Controller))
-	{
-		return nullptr;
-	}
-
-	ULocalPlayer* LocalPlayer = Controller->GetLocalPlayer();
-	return IsValid(LocalPlayer) && LocalPlayer->IsA(Class) ? LocalPlayer : nullptr;
-}
-
 UGameInstance* UTCU_Library::GetTypedGameInstance(const UObject* ContextObject,
 	TSubclassOf<UGameInstance> Class)
 {
@@ -79,10 +59,31 @@ const AWorldSettings* UTCU_Library::GetWorldSettings(const UObject* ContextObjec
 	check(WorldSettings->IsA(SettingsClass));
 	return WorldSettings;
 }
+
+APlayerController* UTCU_Library::GetTypedPlayerController(const UObject* ContextObject,
+	TSubclassOf<APlayerController> Class, int32 PlayerIndex)
+{
+	APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
+	return IsValid(Controller) && Controller->IsA(Class) ? Controller : nullptr;
+}
+
+ULocalPlayer* UTCU_Library::GetTypedLocalPlayer(const UObject* ContextObject, TSubclassOf<ULocalPlayer> Class,
+	int32 PlayerIndex)
+{
+	const APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
+	if (!IsValid(Controller))
+	{
+		return nullptr;
+	}
+
+	ULocalPlayer* LocalPlayer = Controller->GetLocalPlayer();
+	return IsValid(LocalPlayer) && LocalPlayer->IsA(Class) ? LocalPlayer : nullptr;
+}
+
 #pragma endregion
 
 #pragma region Player
-TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject)
+TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly)
 {
 	TArray<APlayerController*> ReturnValue;
 
@@ -91,14 +92,133 @@ TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* Con
 	{
 		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
-			if (Iterator->IsValid())
+			APlayerController* PlayerController = Iterator->Get();
+			if (!IsValid(PlayerController))
 			{
-				ReturnValue.Add(Iterator->Get());
+				continue;
+			}
+
+			if (bLocalOnly)
+			{
+				if (!PlayerController->IsLocalController())
+				{
+					continue;
+				}
+			}
+
+			ReturnValue.Add(PlayerController);
+		}
+	}
+
+	return ReturnValue;
+}
+
+TArray<APlayerState*> UTCU_Library::GetPlayerStates(const UObject* ContextObject, bool bLocalOnly)
+{
+	TArray<APlayerState*> ReturnValue;
+
+	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (IsValid(World))
+	{
+		const AGameStateBase* GameState = World->GetGameState();
+		if (IsValid(GameState))
+		{
+			for (TObjectPtr<APlayerState> PlayerState : GameState->PlayerArray)
+			{
+				if (bLocalOnly)
+				{
+					const APlayerController* PlayerController = PlayerState->GetPlayerController();
+					if (!IsValid(PlayerController))
+					{
+						continue;
+					}
+
+					if (!PlayerController->IsLocalController())
+					{
+						continue;
+					}
+				}
+
+				ReturnValue.Add(PlayerState);
 			}
 		}
 	}
 
 	return ReturnValue;
+}
+
+TArray<APawn*> UTCU_Library::GetPlayerPawns(const UObject* ContextObject, bool bLocalOnly,
+	TSubclassOf<APawn> Class)
+{
+	TArray<APawn*> ReturnValue;
+
+	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (IsValid(World))
+	{
+		const AGameStateBase* GameState = World->GetGameState();
+		if (IsValid(GameState))
+		{
+			for (TObjectPtr<APlayerState> PlayerState : GameState->PlayerArray)
+			{
+				if (bLocalOnly)
+				{
+					const APlayerController* PlayerController = PlayerState->GetPlayerController();
+					if (!IsValid(PlayerController))
+					{
+						continue;
+					}
+
+					if (!PlayerController->IsLocalController())
+					{
+						continue;
+					}
+				}
+
+				APawn* PlayerPawn = PlayerState->GetPawn();
+				if (!IsValid(PlayerPawn))
+				{
+					continue;
+				}
+
+				if (!PlayerPawn->IsA(Class))
+				{
+					continue;
+				}
+
+				ReturnValue.Add(PlayerPawn);
+			}
+		}
+	}
+
+	return ReturnValue;
+}
+
+int32 UTCU_Library::GetPlayersNumber(const UObject* ContextObject, bool bLocalOnly)
+{
+	int32 Count = 0;
+
+	const auto* GameState = GetGameState<AGameStateBase>(ContextObject);
+	if (!IsValid(GameState))
+	{
+		return Count;
+	}
+
+	if (!bLocalOnly)
+	{
+		Count = GameState->PlayerArray.Num();
+	}
+	else
+	{
+		for (const TObjectPtr<APlayerState> PlayerState : GameState->PlayerArray)
+		{
+			if (PlayerState->HasLocalNetOwner())
+			{
+				Count++;
+			}
+		}
+	}
+
+	return Count;
 }
 
 int32 UTCU_Library::GetLocalPlayerIndex(const ULocalPlayer* LocalPlayer)
@@ -144,34 +264,6 @@ APlayerController* UTCU_Library::RetrievePlayerController(const ULocalPlayer* Lo
 	}
 
 	return nullptr;
-}
-
-int32 UTCU_Library::GetPlayersNumber(const UObject* ContextObject, bool bOnlyLocal)
-{
-	int32 Count = 0;
-
-	const auto* GameState = GetGameState<AGameStateBase>(ContextObject);
-	if (!IsValid(GameState))
-	{
-		return Count;
-	}
-
-	if (!bOnlyLocal)
-	{
-		Count = GameState->PlayerArray.Num();
-	}
-	else
-	{
-		for (const TObjectPtr<APlayerState> PlayerState : GameState->PlayerArray)
-		{
-			if (PlayerState->HasLocalNetOwner())
-			{
-				Count++;
-			}
-		}
-	}
-
-	return Count;
 }
 #pragma endregion
 
@@ -254,14 +346,6 @@ void UTCU_Library::SetUnfocusedVolumeMultiplier(float InVolumeMultiplier)
 	FApp::SetUnfocusedVolumeMultiplier(InVolumeMultiplier);
 }
 
-void UTCU_Library::SetColorVisionDeficiencyType(EColorVisionDeficiency_BP ColorVisionDeficiency, int32 Severity,
-	bool bCorrectDeficiency, bool bShowCorrectionWithDeficiency)
-{
-	FSlateApplication::Get().GetRenderer()->SetColorVisionDeficiencyType(
-		static_cast<EColorVisionDeficiency>(ColorVisionDeficiency), Severity,
-		bCorrectDeficiency, bShowCorrectionWithDeficiency);
-}
-
 void UTCU_Library::CancelAllLatentActions(UObject* ContextObject)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -288,6 +372,11 @@ bool UTCU_Library::IsEditor()
 #else
 	return false;
 #endif
+}
+
+bool UTCU_Library::K2_IsEditor()
+{
+	return IsEditor();
 }
 
 bool UTCU_Library::IsPreviewWorld(const UObject* ContextObject)

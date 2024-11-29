@@ -9,17 +9,6 @@
 
 #include "TCU_Library.generated.h"
 
-class AGameSession;
-
-UENUM(BlueprintType)
-enum class EColorVisionDeficiency_BP : uint8
-{
-	NormalVision UMETA(DisplayName="Normal Vision"),
-	Deuteranope UMETA(DisplayName="Deuteranope (green weak/blind) (7% of males, 0.4% of females)"),
-	Protanope UMETA(DisplayName="Protanope (red weak/blind) (2% of males, 0.01% of females)"),
-	Tritanope UMETA(DisplayName="Tritanope (blue weak/blind) (0.0003% of males)"),
-};
-
 UCLASS()
 class TONETFALCOMMONUTILITIES_API UTCU_Library
 	: public UBlueprintFunctionLibrary
@@ -42,23 +31,35 @@ public:
 	static APlayerController* GetTypedPlayerController(const UObject* ContextObject,
 		TSubclassOf<APlayerController> Class, int32 PlayerIndex);
 
+	UFUNCTION(BlueprintPure, Category="Game", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
+		DeterminesOutputType="SettingsClass"))
+	static const AWorldSettings* GetWorldSettings(const UObject* ContextObject,
+		const TSubclassOf<AWorldSettings> SettingsClass);
+
 	UFUNCTION(BlueprintPure, Category="Game", meta=(WorldContext="ContextObject", DeterminesOutputType="Class"))
 	static ULocalPlayer* GetTypedLocalPlayer(const UObject* ContextObject,
 		TSubclassOf<ULocalPlayer> Class, int32 PlayerIndex);
 
 	UFUNCTION(BlueprintPure, Category="Game", meta=(WorldContext="ContextObject", DeterminesOutputType="Class"))
 	static UGameInstance* GetTypedGameInstance(const UObject* ContextObject, TSubclassOf<UGameInstance> Class);
-
-	UFUNCTION(BlueprintPure, Category="Game", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
-		DeterminesOutputType="SettingsClass"))
-	static const AWorldSettings* GetWorldSettings(const UObject* ContextObject,
-		const TSubclassOf<AWorldSettings> SettingsClass);
 #pragma endregion
 
 #pragma region Player
 	UFUNCTION(BlueprintPure="False", Category="Game|Player",
 		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
-	static TArray<APlayerController*> GetPlayerControllers(const UObject* ContextObject);
+	static TArray<APlayerController*> GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly);
+
+	UFUNCTION(BlueprintPure="False", Category="Game|Player",
+		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
+	static TArray<APlayerState*> GetPlayerStates(const UObject* ContextObject, bool bLocalOnly);
+
+	UFUNCTION(BlueprintPure="False", Category="Game|Player",
+		meta=(DefaultToSelf="ContextObject", HidePin="ContextObject", DeterminesOutputType="Class"))
+	static TArray<APawn*> GetPlayerPawns(const UObject* ContextObject, bool bLocalOnly,
+		TSubclassOf<APawn> Class);
+
+	UFUNCTION(BlueprintPure, Category="Game|Player", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
+	static int32 GetPlayersNumber(const UObject* ContextObject, bool bLocalOnly = false);
 
 	UFUNCTION(BlueprintPure, Category="Game|Player")
 	static int32 GetLocalPlayerIndex(const ULocalPlayer* LocalPlayer);
@@ -71,9 +72,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Game|Player")
 	static APlayerController* RetrievePlayerController(const ULocalPlayer* LocalPlayer);
-
-	UFUNCTION(BlueprintPure, Category="Game|Player", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
-	static int32 GetPlayersNumber(const UObject* ContextObject, bool bOnlyLocal = false);
 #pragma endregion
 
 #pragma region Time
@@ -118,15 +116,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Game|Misc")
 	static void SetUnfocusedVolumeMultiplier(float InVolumeMultiplier);
 
-	UFUNCTION(BlueprintCallable, Category="Game|Misc")
-	static void SetColorVisionDeficiencyType(EColorVisionDeficiency_BP ColorVisionDeficiency, int32 Severity,
-		bool bCorrectDeficiency, bool bShowCorrectionWithDeficiency);
-
 	UFUNCTION(BlueprintCallable, Category="Game|Misc", meta=(DefaultToSelf="ContextObject"))
 	static void CancelAllLatentActions(UObject* ContextObject);
 
 	UFUNCTION(BlueprintPure, Category="Game|Misc")
 	static bool IsEditor();
+
+	UFUNCTION(BlueprintPure="False", Category="Game|Misc", DisplayName="Is Editor",
+		meta=(ExpandBoolAsExecs="ReturnValue"))
+	static bool K2_IsEditor();
 
 	UFUNCTION(BlueprintPure, Category="Game|Misc", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
 	static bool IsPreviewWorld(const UObject* ContextObject);
@@ -135,13 +133,13 @@ public:
 	static APlayerStart* FindPlayerStart(const APlayerController* Controller, const FString& IncomingName,
 		const TSubclassOf<APawn> PawnClass);
 
-	UFUNCTION(BlueprintCallable, Category="Do Nothing", meta=(CompactNodeTitle="Do Nothing", DevelopmentOnly))
+	UFUNCTION(BlueprintCallable, Category="Game|Misc", meta=(CompactNodeTitle="Do Nothing", DevelopmentOnly))
 	static void DoNothing();
 #pragma endregion
 
 #pragma region Networking
-	UFUNCTION(BlueprintCallable, Category="Game|Networking", DisplayName="Is Dedicated Server",
-		meta=(WorldContext="WorldContextObject", ExpandBoolAsExecs="ReturnValue", AllowPrivateAccess))
+	UFUNCTION(BlueprintCallable, Category="Game|Networking",
+		meta=(WorldContext="WorldContextObject", ExpandBoolAsExecs="ReturnValue"))
 	static bool IsDedicatedServer(const UObject* WorldContextObject);
 #pragma endregion
 #pragma endregion
@@ -160,14 +158,14 @@ public:
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetGameInstance(const UObject* ContextObject);
 
+	template<typename UserClass>
+	[[nodiscard]] static UserClass* GetWorldSettings(const UObject* ContextObject);
+
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetPlayerController(const UObject* ContextObject, int32 PlayerIndex);
 
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetLocalPlayer(const UObject* ContextObject, int32 PlayerIndex);
-
-	template<typename UserClass>
-	[[nodiscard]] static UserClass* GetWorldSettings(const UObject* ContextObject);
 
 #pragma region Checked
 	template <typename UserClass>
@@ -182,14 +180,14 @@ public:
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetGameInstance_Checked(const UObject* ContextObject);
 
+	template<typename UserClass>
+	[[nodiscard]] static UserClass* GetWorldSettings_Checked(const UObject* ContextObject);
+
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetPlayerController_Checked(const UObject* ContextObject, int32 PlayerIndex);
 
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetLocalPlayer_Checked(const UObject* ContextObject, int32 PlayerIndex);
-
-	template<typename UserClass>
-	[[nodiscard]] static UserClass* GetWorldSettings_Checked(const UObject* ContextObject);
 #pragma endregion
 #pragma endregion
 
@@ -295,6 +293,22 @@ UserClass* UTCU_Library::GetGameInstance(const UObject* ContextObject)
 }
 
 template<typename UserClass>
+UserClass* UTCU_Library::GetWorldSettings(const UObject* ContextObject)
+{
+	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (!IsValid(World))
+	{
+		return nullptr;
+	}
+
+	const AWorldSettings* WorldSettings = World->GetWorldSettings();
+	check(IsValid(WorldSettings));
+
+	auto* TypedWorldSettings = Cast<UserClass>(WorldSettings);
+	return TypedWorldSettings;
+}
+
+template<typename UserClass>
 UserClass* UTCU_Library::GetPlayerController(const UObject* ContextObject, int32 PlayerIndex)
 {
 	APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
@@ -317,22 +331,6 @@ UserClass* UTCU_Library::GetLocalPlayer(const UObject* ContextObject, int32 Play
 
 	auto* TypedLocalPlayer = Cast<UserClass>(LocalPlayer);
 	return TypedLocalPlayer;
-}
-
-template<typename UserClass>
-UserClass* UTCU_Library::GetWorldSettings(const UObject* ContextObject)
-{
-	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
-	if (!IsValid(World))
-	{
-		return nullptr;
-	}
-
-	const AWorldSettings* WorldSettings = World->GetWorldSettings();
-	check(IsValid(WorldSettings));
-
-	auto* TypedWorldSettings = Cast<UserClass>(WorldSettings);
-	return TypedWorldSettings;
 }
 
 #pragma region Checked
@@ -373,6 +371,15 @@ UserClass* UTCU_Library::GetGameInstance_Checked(const UObject* ContextObject)
 }
 
 template<typename UserClass>
+UserClass* UTCU_Library::GetWorldSettings_Checked(const UObject* ContextObject)
+{
+	auto* TypedWorldSettings = GetWorldSettings<UserClass>(ContextObject);
+	check(IsValid(TypedWorldSettings));
+
+	return TypedWorldSettings;
+}
+
+template<typename UserClass>
 UserClass* UTCU_Library::GetPlayerController_Checked(const UObject* ContextObject, int32 PlayerIndex)
 {
 	auto* TypedPlayerController = GetPlayerController<UserClass>(ContextObject);
@@ -388,15 +395,6 @@ UserClass* UTCU_Library::GetLocalPlayer_Checked(const UObject* ContextObject, in
 	check(IsValid(TypedLocalPlayer));
 
 	return TypedLocalPlayer;
-}
-
-template<typename UserClass>
-UserClass* UTCU_Library::GetWorldSettings_Checked(const UObject* ContextObject)
-{
-	auto* TypedWorldSettings = GetWorldSettings<UserClass>(ContextObject);
-	check(IsValid(TypedWorldSettings));
-
-	return TypedWorldSettings;
 }
 #pragma endregion
 #pragma endregion
