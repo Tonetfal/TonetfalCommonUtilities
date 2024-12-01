@@ -18,7 +18,7 @@
         {
             "Name": "TonetfalCommonUtilities",
             "Type": "Runtime",
-            "LoadingPhase": "PreLoadingScreen"
+            "LoadingPhase": "Default"
         }
     ]
 }

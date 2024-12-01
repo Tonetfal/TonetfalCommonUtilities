@@ -4,12 +4,13 @@
 
 #include "Engine/PlayerStartPIE.h"
 #include "EngineUtils.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameSession.h"
-#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
+#pragma region Blueprints
 #pragma region TypedGetters
 AGameStateBase* UTCU_Library::GetTypedGameState(const UObject* ContextObject,
 	TSubclassOf<AGameStateBase> Class)
@@ -47,16 +48,20 @@ UGameInstance* UTCU_Library::GetTypedGameInstance(const UObject* ContextObject,
 const AWorldSettings* UTCU_Library::GetWorldSettings(const UObject* ContextObject,
 	const TSubclassOf<AWorldSettings> SettingsClass)
 {
-	check(IsValid(ContextObject));
-	check(IsValid(SettingsClass));
+	if (!IsValid(SettingsClass))
+	{
+		return nullptr;
+	}
 
-	const UWorld* World = ContextObject->GetWorld();
-	check(IsValid(World));
+	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (!IsValid(World))
+	{
+		return nullptr;
+	}
 
 	const AWorldSettings* WorldSettings = World->GetWorldSettings();
-	check(IsValid(WorldSettings));
-
 	check(WorldSettings->IsA(SettingsClass));
+
 	return WorldSettings;
 }
 
@@ -493,4 +498,5 @@ bool UTCU_Library::IsDedicatedServer(const UObject* WorldContextObject)
 {
 	return UKismetSystemLibrary::IsDedicatedServer(WorldContextObject);
 }
+#pragma endregion
 #pragma endregion

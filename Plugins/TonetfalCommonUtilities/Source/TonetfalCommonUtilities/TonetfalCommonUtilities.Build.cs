@@ -12,18 +12,14 @@ public class TonetfalCommonUtilities : ModuleRules
 			new string[]
 			{
 				"Core",
-				"BlueprintGraph",
 			}
 		);
-
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"CoreUObject",
 				"Engine",
-				"Slate",
-				"SlateCore",
 			}
 		);
 	}
