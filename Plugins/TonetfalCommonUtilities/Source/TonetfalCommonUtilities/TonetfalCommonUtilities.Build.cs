@@ -12,6 +12,7 @@ public class TonetfalCommonUtilities : ModuleRules
 			new string[]
 			{
 				"Core",
+				"DeveloperSettings",
 			}
 		);
 

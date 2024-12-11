@@ -10,6 +10,8 @@
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
+#define LOCTEXT_NAMESPACE "TonetfalCommonUtilities"
+
 #pragma region Blueprints
 #pragma region TypedGetters
 AGameStateBase* UTCU_Library::GetTypedGameState(const UObject* ContextObject,
@@ -66,10 +68,28 @@ const AWorldSettings* UTCU_Library::GetWorldSettings(const UObject* ContextObjec
 }
 
 APlayerController* UTCU_Library::GetTypedPlayerController(const UObject* ContextObject,
-	TSubclassOf<APlayerController> Class, int32 PlayerIndex)
+	TSubclassOf<APlayerController> Class, int32 PlayerIndex, bool bLocalOnly)
 {
-	APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
-	return IsValid(Controller) && Controller->IsA(Class) ? Controller : nullptr;
+	if (!bLocalOnly)
+	{
+		APlayerController* Controller = UGameplayStatics::GetPlayerController(ContextObject, PlayerIndex);
+		return IsValid(Controller) && Controller->IsA(Class) ? Controller : nullptr;
+	}
+
+	const UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (IsValid(World))
+	{
+		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		{
+			APlayerController* PlayerController = Iterator->Get();
+			if (IsValid(PlayerController) && bLocalOnly && PlayerController->IsLocalController())
+			{
+				return PlayerController;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 ULocalPlayer* UTCU_Library::GetTypedLocalPlayer(const UObject* ContextObject, TSubclassOf<ULocalPlayer> Class,
@@ -500,3 +520,24 @@ bool UTCU_Library::IsDedicatedServer(const UObject* WorldContextObject)
 }
 #pragma endregion
 #pragma endregion
+
+UTCU_Settings::UTCU_Settings()
+{
+	CategoryName = "Plugins";
+	SectionName = "Tonetfal's Common Utilities";
+}
+
+#if WITH_EDITOR
+FText UTCU_Settings::GetSectionText() const
+{
+	return LOCTEXT("SettingsDisplayName", "Tonetfal's Common Utilities");
+}
+#endif
+
+float UTCU_Settings::GetMaxWaitingTime()
+{
+	const auto* This = GetDefault<ThisClass>();
+	return This->MaxWaitingTime;
+}
+
+#undef LOCTEXT_NAMESPACE

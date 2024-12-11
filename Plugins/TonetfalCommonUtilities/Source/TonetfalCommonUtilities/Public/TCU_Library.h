@@ -29,7 +29,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Game", meta=(WorldContext="ContextObject", DeterminesOutputType="Class"))
 	static APlayerController* GetTypedPlayerController(const UObject* ContextObject,
-		TSubclassOf<APlayerController> Class, int32 PlayerIndex);
+		TSubclassOf<APlayerController> Class, int32 PlayerIndex, bool bLocalOnly);
 
 	UFUNCTION(BlueprintPure, Category="Game", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
 		DeterminesOutputType="SettingsClass"))
@@ -497,3 +497,27 @@ int32 UTCU_Library::GetHighestIndex(const TArray<UserClass>& Array, int32 Index)
 }
 #pragma endregion
 #pragma endregion
+
+UCLASS(DefaultConfig, Config="Engine")
+class TONETFALCOMMONUTILITIES_API UTCU_Settings
+	: public UDeveloperSettings
+{
+	GENERATED_BODY()
+
+public:
+	UTCU_Settings();
+
+#if WITH_EDITOR
+	//~UDeveloperSettings Interface
+	virtual FText GetSectionText() const override;
+	//~End of UDeveloperSettings Interface
+#endif
+
+	UFUNCTION(BlueprintPure)
+	static float GetMaxWaitingTime();
+
+public:
+	/** Max time WaitUntilValid can be active for. Any non-positive value means that there's no limit. */
+	UPROPERTY(Config, EditAnywhere, meta=(Units="seconds"))
+	float MaxWaitingTime = 60.f;
+};

@@ -11,3 +11,4 @@ into your project's root.
 ## Usage
 
 <img src="Docs/all_nodes.png" alt="Docs/all_nodes.png">
+<img src="Docs/settings.png" alt="Docs/settings.png">
