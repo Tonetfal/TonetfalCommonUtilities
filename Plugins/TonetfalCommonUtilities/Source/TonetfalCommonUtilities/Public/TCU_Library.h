@@ -76,6 +76,20 @@ public:
 	static APlayerController* RetrievePlayerController(const ULocalPlayer* LocalPlayer);
 #pragma endregion
 
+#pragma region Widget
+	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget", meta=(DefaultToSelf="Widget",
+		DeterminesOutputType="Class"))
+	static APlayerController* GetTypedOwningPlayer(UUserWidget* Widget, TSubclassOf<APlayerController> Class);
+
+	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget", meta=(DefaultToSelf="Widget",
+		DeterminesOutputType="Class"))
+	static APawn* GetTypedOwningPlayerPawn(UUserWidget* Widget, TSubclassOf<APawn> Class);
+
+	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget", meta=(DefaultToSelf="Widget",
+		DeterminesOutputType="Class"))
+	static APlayerState* GetTypedOwningPlayerState(UUserWidget* Widget, TSubclassOf<APlayerState> Class);
+#pragma endregion
+
 #pragma region Time
 	UFUNCTION(BlueprintPure, Category="Game|Time", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
 		CompactNodeTitle="Get Time", BlueprintThreadSafe))
@@ -131,9 +145,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Game|Misc", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
 	static bool IsPreviewWorld(const UObject* ContextObject);
 
-	UFUNCTION(BlueprintPure, Category="Game|Misc")
+	UFUNCTION(BlueprintPure="False", Category="Game|Misc")
 	static APlayerStart* FindPlayerStart(const APlayerController* Controller, const FString& IncomingName,
 		const TSubclassOf<APawn> PawnClass);
+
+	UFUNCTION(BlueprintCallable, Category="Game|Misc")
+	static void ClipboardCopy(const FString& String);
 
 	UFUNCTION(BlueprintCallable, Category="Game|Misc", meta=(CompactNodeTitle="Do Nothing", DevelopmentOnly))
 	static void DoNothing();
@@ -143,6 +160,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Game|Networking",
 		meta=(WorldContext="WorldContextObject", ExpandBoolAsExecs="ReturnValue"))
 	static bool IsDedicatedServer(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category="Game|Networking")
+	static FString ToString(FUniqueNetIdRepl UniqueNetId);
+
+	UFUNCTION(BlueprintPure, Category="Game|Networking")
+	static FUniqueNetIdRepl ToNetId(const FString& String);
+
+	UFUNCTION(BlueprintPure, Category="Game|Networking")
+	static bool IsNetIdValid(FUniqueNetIdRepl UniqueNetId);
+
+	UFUNCTION(BlueprintPure, Category="Game|Networking")
+	static FUniqueNetIdRepl GetNetIdFromController(const APlayerController* Controller);
+#pragma endregion
+
+#pragma region String
+	UFUNCTION(BlueprintCallable, Category="Game|String")
+	static FString TrimLeadingSpaces(FString InString, bool& bOutHasTrimmed);
+
+	UFUNCTION(BlueprintCallable, Category="Game|String")
+	static FString TrimTrailingSpaces(FString InString, bool& bOutHasTrimmed);
+
+	UFUNCTION(BlueprintCallable, Category="Game|String")
+	static FString TrimSurroundingSpaces(FString InString, bool& bOutHasTrimmed);
+
+	UFUNCTION(BlueprintCallable, Category="Game|String")
+	static FString LimitString(FString InString, int32 Limit, bool& bOutLimited);
 #pragma endregion
 #pragma endregion
 

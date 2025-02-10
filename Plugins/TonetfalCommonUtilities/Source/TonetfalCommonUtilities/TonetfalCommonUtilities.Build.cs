@@ -12,13 +12,16 @@ public class TonetfalCommonUtilities : ModuleRules
 			new string[]
 			{
 				"Core",
+				"CoreOnline",
 				"DeveloperSettings",
+				"UMG",
 			}
 		);
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"ApplicationCore",
 				"CoreUObject",
 				"Engine",
 			}

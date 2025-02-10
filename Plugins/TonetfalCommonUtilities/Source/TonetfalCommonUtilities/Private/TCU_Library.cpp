@@ -4,11 +4,13 @@
 
 #include "Engine/PlayerStartPIE.h"
 #include "EngineUtils.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameSession.h"
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Windows/WindowsPlatformApplicationMisc.h"
 
 #define LOCTEXT_NAMESPACE "TonetfalCommonUtilities"
 
@@ -304,6 +306,54 @@ APlayerController* UTCU_Library::RetrievePlayerController(const ULocalPlayer* Lo
 }
 #pragma endregion
 
+#pragma region Player
+APlayerController* UTCU_Library::GetTypedOwningPlayer(UUserWidget* Widget, TSubclassOf<APlayerController> Class)
+{
+	if (IsValid(Widget))
+	{
+		APlayerController* PlayerController = Widget->GetOwningPlayer();
+		if (IsValid(PlayerController) && PlayerController->IsA(Class))
+		{
+			return PlayerController;
+		}
+	}
+
+	return nullptr;
+}
+
+APawn* UTCU_Library::GetTypedOwningPlayerPawn(UUserWidget* Widget, TSubclassOf<APawn> Class)
+{
+	if (IsValid(Widget))
+	{
+		APawn* Pawn = Widget->GetOwningPlayerPawn();
+		if (IsValid(Pawn) && Pawn->IsA(Class))
+		{
+			return Pawn;
+		}
+	}
+
+	return nullptr;
+}
+
+APlayerState* UTCU_Library::GetTypedOwningPlayerState(UUserWidget* Widget, TSubclassOf<APlayerState> Class)
+{
+	if (IsValid(Widget))
+	{
+		APlayerController* PlayerController = Widget->GetOwningPlayer();
+		if (IsValid(PlayerController))
+		{
+			auto* PlayerState = PlayerController->GetPlayerState<APlayerState>();
+			if (IsValid(PlayerState) && PlayerState->IsA(Class))
+			{
+				return PlayerState;
+			}
+		}
+	}
+
+	return nullptr;
+}
+#pragma endregion
+
 #pragma region Time
 float UTCU_Library::GetTime(const UObject* ContextObject)
 {
@@ -507,6 +557,11 @@ APlayerStart* UTCU_Library::FindPlayerStart(const APlayerController* Controller,
 	return FoundPlayerStart;
 }
 
+void UTCU_Library::ClipboardCopy(const FString& String)
+{
+	FPlatformApplicationMisc::ClipboardCopy(*String);
+}
+
 void UTCU_Library::DoNothing()
 {
 	// https://landelare.github.io/2022/04/30/uses-of-a-useless-node.html
@@ -517,6 +572,109 @@ void UTCU_Library::DoNothing()
 bool UTCU_Library::IsDedicatedServer(const UObject* WorldContextObject)
 {
 	return UKismetSystemLibrary::IsDedicatedServer(WorldContextObject);
+}
+
+FString UTCU_Library::ToString(FUniqueNetIdRepl UniqueNetId)
+{
+	const FString ReturnValue = UniqueNetId.ToString();
+	return ReturnValue;
+}
+
+FUniqueNetIdRepl UTCU_Library::ToNetId(const FString& String)
+{
+	FUniqueNetIdRepl ReturnValue;
+	ReturnValue.FromJson(String);
+	return ReturnValue;
+}
+
+bool UTCU_Library::IsNetIdValid(FUniqueNetIdRepl UniqueNetId)
+{
+	return UniqueNetId.IsValid();
+}
+
+FUniqueNetIdRepl UTCU_Library::GetNetIdFromController(const APlayerController* Controller)
+{
+	if (IsValid(Controller) && IsValid(Controller->PlayerState))
+	{
+		return Controller->PlayerState->GetUniqueId();
+	}
+
+	return FUniqueNetIdRepl();
+}
+#pragma endregion
+
+#pragma region String
+static bool IsSpace(FString::ElementType Character)
+{
+	return Character == ' ' || Character == '\n' || Character == '\r';
+}
+
+FString UTCU_Library::TrimLeadingSpaces(FString InString, bool& bOutHasTrimmed)
+{
+	const int32 Count = InString.Len();
+	for (int32 i = 0; i < Count; i++)
+	{
+		const FString::ElementType Character = InString[0];
+		if (IsSpace(Character))
+		{
+			InString.RemoveAt(0);
+			bOutHasTrimmed = true;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return InString;
+}
+
+FString UTCU_Library::TrimTrailingSpaces(FString InString, bool& bOutHasTrimmed)
+{
+	const int32 Count = InString.Len();
+	for (int32 i = Count - 1; i >= 0; i--)
+	{
+		const FString::ElementType Character = InString[i];
+		if (IsSpace(Character))
+		{
+			InString.RemoveAt(i);
+			bOutHasTrimmed = true;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return InString;
+}
+
+FString UTCU_Library::TrimSurroundingSpaces(FString InString, bool& bOutHasTrimmed)
+{
+	bool bTrimmed = false;
+
+	InString = TrimLeadingSpaces(InString, bTrimmed);
+	bOutHasTrimmed |= bTrimmed;
+
+	InString = TrimTrailingSpaces(InString, bTrimmed);
+	bOutHasTrimmed |= bTrimmed;
+
+	return InString;
+}
+
+FString UTCU_Library::LimitString(FString InString, int32 Limit, bool& bOutLimited)
+{
+	if (Limit >= InString.Len())
+	{
+		bOutLimited = false;
+		return InString;
+	}
+
+	FString ReturnValue = InString;
+	ReturnValue.LeftInline(Limit);
+
+	bOutLimited = true;
+	return ReturnValue;
 }
 #pragma endregion
 #pragma endregion
