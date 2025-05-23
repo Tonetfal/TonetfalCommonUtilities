@@ -9,6 +9,8 @@
 
 #include "TCU_Library.generated.h"
 
+struct FEventReply;
+
 UCLASS()
 class TONETFALCOMMONUTILITIES_API UTCU_Library
 	: public UBlueprintFunctionLibrary
@@ -42,6 +44,19 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Game", meta=(WorldContext="ContextObject", DeterminesOutputType="Class"))
 	static UGameInstance* GetTypedGameInstance(const UObject* ContextObject, TSubclassOf<UGameInstance> Class);
+
+	UFUNCTION(BlueprintPure, Category="Game", meta=(DeterminesOutputType="Class"))
+	static AHUD* GetTypedHUD(const APlayerController* PlayerController, TSubclassOf<AHUD> Class);
+#pragma endregion
+
+#pragma region Actor
+	UFUNCTION(BlueprintCallable, Category="Actor",
+		meta=(WorldContext="WorldContextObject", DeterminesOutputType="Interface"))
+	static AActor* GetActorOfClassWithInterface(const UObject* WorldContextObject, TSubclassOf<UInterface> Interface);
+
+	UFUNCTION(BlueprintCallable, Category="Actor",
+		meta=(WorldContext="WorldContextObject", DeterminesOutputType="ActorClass"))
+	static AActor* GetActorOfClassWithTag(const UObject* WorldContextObject, TSubclassOf<AActor> ActorClass, FName Tag);
 #pragma endregion
 
 #pragma region Player
@@ -88,6 +103,9 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget", meta=(DefaultToSelf="Widget",
 		DeterminesOutputType="Class"))
 	static APlayerState* GetTypedOwningPlayerState(UUserWidget* Widget, TSubclassOf<APlayerState> Class);
+
+	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget")
+	static bool IsHandled(FEventReply Reply);
 #pragma endregion
 
 #pragma region Time
@@ -346,9 +364,7 @@ UserClass* UTCU_Library::GetWorldSettings(const UObject* ContextObject)
 		return nullptr;
 	}
 
-	const AWorldSettings* WorldSettings = World->GetWorldSettings();
-	check(IsValid(WorldSettings));
-
+	AWorldSettings* WorldSettings = World->GetWorldSettings();
 	auto* TypedWorldSettings = Cast<UserClass>(WorldSettings);
 	return TypedWorldSettings;
 }

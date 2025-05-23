@@ -2,11 +2,12 @@
 
 #include "TCU_Library.h"
 
+#include "Blueprint/UserWidget.h"
 #include "Engine/PlayerStartPIE.h"
 #include "EngineUtils.h"
-#include "Blueprint/UserWidget.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameSession.h"
+#include "GameFramework/HUD.h"
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,6 +48,17 @@ UGameInstance* UTCU_Library::GetTypedGameInstance(const UObject* ContextObject,
 {
 	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(ContextObject);
 	return IsValid(GameInstance) && GameInstance->IsA(Class) ? GameInstance : nullptr;
+}
+
+AHUD* UTCU_Library::GetTypedHUD(const APlayerController* PlayerController, TSubclassOf<AHUD> Class)
+{
+	if (!IsValid(PlayerController))
+	{
+		return nullptr;
+	}
+
+	AHUD* HUD = PlayerController->GetHUD();
+	return IsValid(HUD) && HUD->IsA(Class) ? HUD : nullptr;
 }
 
 const AWorldSettings* UTCU_Library::GetWorldSettings(const UObject* ContextObject,
@@ -108,6 +120,69 @@ ULocalPlayer* UTCU_Library::GetTypedLocalPlayer(const UObject* ContextObject, TS
 }
 
 #pragma endregion
+
+#pragma region Actor
+AActor* UTCU_Library::GetActorOfClassWithInterface(const UObject* WorldContextObject, TSubclassOf<UInterface> Interface)
+{
+	// QUICK_SCOPE_CYCLE_COUNTER(UGameplayStatics_GetActorOfClassWithInterface);
+
+	// We do nothing if no interface provided, rather than giving ALL actors!
+	if (!Interface)
+	{
+		return nullptr;
+	}
+
+	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{
+		for (FActorIterator It(World); It; ++It)
+		{
+			AActor* Actor = *It;
+			if (Actor->GetClass()->ImplementsInterface(Interface))
+			{
+				return Actor;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+AActor* UTCU_Library::GetActorOfClassWithTag(const UObject* WorldContextObject, TSubclassOf<AActor> ActorClass,
+	FName Tag)
+{
+	// QUICK_SCOPE_CYCLE_COUNTER(UGameplayStatics_GetActorOfClassWithTag);
+
+	// We do nothing if no tag is provided, rather than giving ALL actors!
+	if (Tag.IsNone())
+	{
+		return nullptr;
+	}
+
+	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{
+		for (TActorIterator It(World, ActorClass); It; ++It)
+		{
+			AActor* Actor = *It;
+			if (IsValid(Actor) && Actor->ActorHasTag(Tag))
+			{
+				return Actor;
+			}
+		}
+	}
+
+	return nullptr;
+}
+#pragma endregion
+
+// void UMyActor::Foo()
+// {
+// 	TArray<int32> Numbers { 12, 64, 43, 74, 39};
+//
+// 	for (int32 i = 0; i < Numbers.Num(); ++i)
+// 	{
+// 		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Index [%d]: [%d]"), i, Numbers[i]));
+// 	}
+// }
 
 #pragma region Player
 TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly,
@@ -352,6 +427,11 @@ APlayerState* UTCU_Library::GetTypedOwningPlayerState(UUserWidget* Widget, TSubc
 
 	return nullptr;
 }
+
+bool UTCU_Library::IsHandled(FEventReply Reply)
+{
+	return Reply.NativeReply.IsEventHandled();
+}
 #pragma endregion
 
 #pragma region Time
@@ -438,17 +518,7 @@ void UTCU_Library::CancelAllLatentActions(UObject* ContextObject)
 	if (UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-		auto* ObjectActionList = LatentActionManager.ObjectToActionListMap.Find(ContextObject);
-		if (ObjectActionList && ObjectActionList->IsValid())
-		{
-			for (auto [UUID, LatentAction] : (*ObjectActionList)->ActionList)
-			{
-				LatentAction->NotifyObjectDestroyed();
-				delete LatentAction;
-			}
-
-			(*ObjectActionList)->ActionList.Reset();
-		}
+		LatentActionManager.RemoveActionsForObject(ContextObject);
 	}
 }
 
