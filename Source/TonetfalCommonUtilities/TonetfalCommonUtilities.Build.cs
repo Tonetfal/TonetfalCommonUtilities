@@ -14,6 +14,7 @@ public class TonetfalCommonUtilities : ModuleRules
 				"Core",
 				"CoreOnline",
 				"DeveloperSettings",
+				"GameplayTags",
 				"UMG",
 			}
 		);

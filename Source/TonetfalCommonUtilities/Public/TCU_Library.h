@@ -4,6 +4,7 @@
 
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/SaveGame.h"
+#include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -124,6 +125,27 @@ public:
 	UFUNCTION(BlueprintPure, Category="Game|Time", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
 		CompactNodeTitle="Time Since (Server)", BlueprintThreadSafe))
 	static float TimeSince_Server(const UObject* ContextObject, float Time);
+	
+	UFUNCTION(BlueprintPure, Category="Game|Time|Explicit", meta=(DefaultToSelf="ContextObject",
+		CompactNodeTitle="Get Time", BlueprintThreadSafe))
+	static float GetTime_Explicit(const UObject* ContextObject);
+
+	UFUNCTION(BlueprintPure, Category="Game|Time|Explicit", meta=(DefaultToSelf="ContextObject",
+		CompactNodeTitle="Time Since", BlueprintThreadSafe))
+	static float TimeSince_Explicit(const UObject* ContextObject, float Time);
+
+	UFUNCTION(BlueprintPure, Category="Game|Time|Explicit", meta=(DefaultToSelf="ContextObject",
+		CompactNodeTitle="Get Time (Server)", BlueprintThreadSafe))
+	static float GetTime_Server_Explicit(const UObject* ContextObject);
+
+	UFUNCTION(BlueprintPure, Category="Game|Time|Explicit", meta=(DefaultToSelf="ContextObject",
+		CompactNodeTitle="Time Since (Server)", BlueprintThreadSafe))
+	static float TimeSince_Server_Explicit(const UObject* ContextObject, float Time);
+#pragma endregion
+
+#pragma region Gameplay Tags
+	UFUNCTION(BlueprintPure, Category="Game|Gameplay Tags")
+	static FGameplayTagContainer RemoveTags(const FGameplayTagContainer& Target, const FGameplayTagContainer& Filter);
 #pragma endregion
 
 #pragma region Build

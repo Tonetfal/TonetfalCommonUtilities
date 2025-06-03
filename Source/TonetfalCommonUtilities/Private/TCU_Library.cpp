@@ -465,6 +465,35 @@ float UTCU_Library::TimeSince_Server(const UObject* ContextObject, float Time)
 	const float TimeSince = GetTime_Server(ContextObject) - Time;
 	return TimeSince;
 }
+
+float UTCU_Library::GetTime_Explicit(const UObject* ContextObject)
+{
+	return GetTime(ContextObject);
+}
+
+float UTCU_Library::TimeSince_Explicit(const UObject* ContextObject, float Time)
+{
+	return TimeSince(ContextObject, Time);
+}
+
+float UTCU_Library::GetTime_Server_Explicit(const UObject* ContextObject)
+{
+	return GetTime_Server(ContextObject);
+}
+
+float UTCU_Library::TimeSince_Server_Explicit(const UObject* ContextObject, float Time)
+{
+	return TimeSince_Server(ContextObject, Time);
+}
+#pragma endregion
+
+#pragma region Gameplay Tags
+FGameplayTagContainer UTCU_Library::RemoveTags(const FGameplayTagContainer& Target, const FGameplayTagContainer& Filter)
+{
+	FGameplayTagContainer ResultContainer = Target;
+	ResultContainer.RemoveTags(Filter);
+	return ResultContainer;
+}
 #pragma endregion
 
 #pragma region Build
