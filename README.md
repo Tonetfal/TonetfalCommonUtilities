@@ -4,7 +4,7 @@ This plugin contains common functions I use in my projects.
 
 ## Installation
 
-Clone the repository it in your project's Plugin directory.
+Clone the repository in your project's Plugin directory.
 
 ## Usage
 
