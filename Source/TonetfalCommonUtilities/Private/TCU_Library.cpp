@@ -174,16 +174,6 @@ AActor* UTCU_Library::GetActorOfClassWithTag(const UObject* WorldContextObject, 
 }
 #pragma endregion
 
-// void UMyActor::Foo()
-// {
-// 	TArray<int32> Numbers { 12, 64, 43, 74, 39};
-//
-// 	for (int32 i = 0; i < Numbers.Num(); ++i)
-// 	{
-// 		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Index [%d]: [%d]"), i, Numbers[i]));
-// 	}
-// }
-
 #pragma region Player
 TArray<APlayerController*> UTCU_Library::GetPlayerControllers(const UObject* ContextObject, bool bLocalOnly,
 	TSubclassOf<APlayerController> Class)
