@@ -422,6 +422,16 @@ bool UTCU_Library::IsHandled(FEventReply Reply)
 {
 	return Reply.NativeReply.IsEventHandled();
 }
+
+bool UTCU_Library::IsDesignTime(const UUserWidget* Widget)
+{
+	return IsValid(Widget) ? Widget->IsDesignTime() : false;
+}
+
+bool UTCU_Library::K2_IsDesignTime(const UUserWidget* Widget)
+{
+	return IsDesignTime(Widget);
+}
 #pragma endregion
 
 #pragma region Time
@@ -504,6 +514,11 @@ FString UTCU_Library::GetFormattedTime()
 #pragma endregion
 
 #pragma region Misc
+TArray<UObject*> UTCU_Library::CastArray(TArray<UObject*> Array, TSubclassOf<UObject> Class)
+{
+	return Array;
+}
+
 void UTCU_Library::CppStackTrace(FString Heading)
 {
 	FDebug::DumpStackTraceToLog(*Heading, ELogVerbosity::Type::Log);
@@ -558,6 +573,11 @@ bool UTCU_Library::K2_IsEditor()
 bool UTCU_Library::IsPreviewWorld(const UObject* ContextObject)
 {
 	return IsValid(ContextObject) ? ContextObject->GetWorld()->IsPreviewWorld() : false;
+}
+
+bool UTCU_Library::IsWorldTearingDown(const UObject* ContextObject)
+{
+	return IsValid(ContextObject) ? ContextObject->GetWorld()->bIsTearingDown : false;
 }
 
 APlayerStart* UTCU_Library::FindPlayerStart(const APlayerController* Controller, const FString& IncomingName,
@@ -654,6 +674,16 @@ void UTCU_Library::ClipboardCopy(const FString& String)
 void UTCU_Library::DoNothing()
 {
 	// https://landelare.github.io/2022/04/30/uses-of-a-useless-node.html
+}
+
+void UTCU_Library::SetActorLabel(AActor* Target, const FString& NewActorLabel, bool bMarkDirty)
+{
+#if WITH_EDITOR
+	if (IsValid(Target))
+	{
+		Target->SetActorLabel(NewActorLabel, bMarkDirty);
+	}
+#endif
 }
 #pragma endregion Misc
 
@@ -764,6 +794,26 @@ FString UTCU_Library::LimitString(FString InString, int32 Limit, bool& bOutLimit
 
 	bOutLimited = true;
 	return ReturnValue;
+}
+
+FString UTCU_Library::Repeat(FString String, int32 Count)
+{
+	FString ReturnValue;
+	for (int32 i = 0; i < Count; ++i)
+	{
+		ReturnValue += String;
+	}
+
+	return ReturnValue;
+}
+#pragma endregion
+#pragma endregion
+
+#pragma region C++
+#pragma region Misc
+bool UTCU_Library::IsWorldType(const UObject* ContextObject, EWorldType::Type Type)
+{
+	return IsValid(ContextObject) ? ContextObject->GetWorld()->WorldType == Type : false;
 }
 #pragma endregion
 #pragma endregion

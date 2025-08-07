@@ -107,6 +107,13 @@ public:
 
 	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget")
 	static bool IsHandled(FEventReply Reply);
+
+	UFUNCTION(BlueprintPure, BlueprintCosmetic, Category="Game|Widget", meta=(DefaultToSelf="Widget"))
+	static bool IsDesignTime(const UUserWidget* Widget);
+
+	UFUNCTION(BlueprintPure="False", BlueprintCosmetic, DisplayName="Is Design Time", Category="Game|Widget",
+		meta=(DefaultToSelf="Widget", ExpandBoolAsExecs="ReturnValue"))
+	static bool K2_IsDesignTime(const UUserWidget* Widget);
 #pragma endregion
 
 #pragma region Time
@@ -125,7 +132,7 @@ public:
 	UFUNCTION(BlueprintPure, Category="Game|Time", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject",
 		CompactNodeTitle="Time Since (Server)", BlueprintThreadSafe))
 	static float TimeSince_Server(const UObject* ContextObject, float Time);
-	
+
 	UFUNCTION(BlueprintPure, Category="Game|Time|Explicit", meta=(DefaultToSelf="ContextObject",
 		CompactNodeTitle="Get Time", BlueprintThreadSafe))
 	static float GetTime_Explicit(const UObject* ContextObject);
@@ -160,6 +167,9 @@ public:
 #pragma endregion
 
 #pragma region Misc
+	UFUNCTION(BlueprintPure, Category="Game|Misc", meta=(DeterminesOutputType="Class"))
+	static TArray<UObject*> CastArray(TArray<UObject*> Array, TSubclassOf<UObject> Class);
+
 	UFUNCTION(BlueprintCallable, Category="Game|Misc", DisplayName="Stack Trace (C++)")
 	static void CppStackTrace(FString Heading);
 
@@ -185,6 +195,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Game|Misc", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
 	static bool IsPreviewWorld(const UObject* ContextObject);
 
+	UFUNCTION(BlueprintPure, Category="Game|Misc", meta=(DefaultToSelf="ContextObject", HidePin="ContextObject"))
+	static bool IsWorldTearingDown(const UObject* ContextObject);
+
 	UFUNCTION(BlueprintPure="False", Category="Game|Misc")
 	static APlayerStart* FindPlayerStart(const APlayerController* Controller, const FString& IncomingName,
 		const TSubclassOf<APawn> PawnClass);
@@ -194,6 +207,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Game|Misc", meta=(CompactNodeTitle="Do Nothing", DevelopmentOnly))
 	static void DoNothing();
+
+	UFUNCTION(BlueprintCallable, Category="Editor Scripting|Actor Editing", meta=(KeyWords="Display Name"))
+	static void SetActorLabel(AActor* Target, const FString& NewActorLabel, bool bMarkDirty = true);
 #pragma endregion
 
 #pragma region Networking
@@ -226,53 +242,61 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Game|String")
 	static FString LimitString(FString InString, int32 Limit, bool& bOutLimited);
+
+	UFUNCTION(BlueprintCallable, Category="Game|String")
+	static FString Repeat(FString String, int32 Count);
 #pragma endregion
 #pragma endregion
 
 #pragma region C++
 #pragma region TypedGetters
-	template <typename UserClass>
+	template <typename UserClass = AGameModeBase>
 	[[nodiscard]] static UserClass* GetGameMode(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = AGameStateBase>
 	[[nodiscard]] static UserClass* GetGameState(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = AGameSession>
 	[[nodiscard]] static UserClass* GetGameSession(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = UGameInstance>
 	[[nodiscard]] static UserClass* GetGameInstance(const UObject* ContextObject);
 
-	template<typename UserClass>
+	template<typename UserClass = AWorldSettings>
 	[[nodiscard]] static UserClass* GetWorldSettings(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = APlayerController>
 	[[nodiscard]] static UserClass* GetPlayerController(const UObject* ContextObject, int32 PlayerIndex);
 
-	template <typename UserClass>
+	template <typename UserClass = ULocalPlayer>
 	[[nodiscard]] static UserClass* GetLocalPlayer(const UObject* ContextObject, int32 PlayerIndex);
 
-#pragma region Checked
 	template <typename UserClass>
+	[[nodiscard]] static UserClass* GetModule(const FName& Name);
+#pragma region Checked
+	template <typename UserClass = AGameModeBase>
 	[[nodiscard]] static UserClass* GetGameMode_Checked(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = AGameStateBase>
 	[[nodiscard]] static UserClass* GetGameState_Checked(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = AGameSession>
 	[[nodiscard]] static UserClass* GetGameSession_Checked(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = UGameInstance>
 	[[nodiscard]] static UserClass* GetGameInstance_Checked(const UObject* ContextObject);
 
-	template<typename UserClass>
+	template<typename UserClass = AWorldSettings>
 	[[nodiscard]] static UserClass* GetWorldSettings_Checked(const UObject* ContextObject);
 
-	template <typename UserClass>
+	template <typename UserClass = APlayerController>
 	[[nodiscard]] static UserClass* GetPlayerController_Checked(const UObject* ContextObject, int32 PlayerIndex);
 
-	template <typename UserClass>
+	template <typename UserClass = ULocalPlayer>
 	[[nodiscard]] static UserClass* GetLocalPlayer_Checked(const UObject* ContextObject, int32 PlayerIndex);
+
+	template <typename UserClass>
+	[[nodiscard]] static UserClass* GetModule_Checked(const FName& Name);
 #pragma endregion
 #pragma endregion
 
@@ -307,6 +331,8 @@ public:
 
 	template <typename UserClass>
 	[[nodiscard]] static int32 GetHighestIndex(const TArray<UserClass>& Array, int32 Index);
+
+	static bool IsWorldType(const UObject* ContextObject, EWorldType::Type Type);
 #pragma endregion
 #pragma endregion
 };
@@ -416,6 +442,13 @@ UserClass* UTCU_Library::GetLocalPlayer(const UObject* ContextObject, int32 Play
 	return TypedLocalPlayer;
 }
 
+template<typename UserClass>
+UserClass* UTCU_Library::GetModule(const FName& Name)
+{
+	IModuleInterface* Interface = FModuleManager::Get().GetModule(Name);
+	return Interface ? static_cast<UserClass*>(Interface) : nullptr;
+}
+
 #pragma region Checked
 template<typename UserClass>
 UserClass* UTCU_Library::GetGameMode_Checked(const UObject* ContextObject)
@@ -478,6 +511,15 @@ UserClass* UTCU_Library::GetLocalPlayer_Checked(const UObject* ContextObject, in
 	check(IsValid(TypedLocalPlayer));
 
 	return TypedLocalPlayer;
+}
+
+template<typename UserClass>
+UserClass* UTCU_Library::GetModule_Checked(const FName& Name)
+{
+	auto* Module = GetModule(Name);
+	check(IsValid(Module));
+
+	return Module;
 }
 #pragma endregion
 #pragma endregion
