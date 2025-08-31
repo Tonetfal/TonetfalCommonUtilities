@@ -228,6 +228,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Game|Networking")
 	static FUniqueNetIdRepl GetNetIdFromController(const APlayerController* Controller);
+
+	UFUNCTION(BlueprintPure, Category="Game|Networking")
+	static FUniqueNetIdRepl GetNetIdFromPawn(const APawn* Pawn);
 #pragma endregion
 
 #pragma region String
@@ -273,6 +276,13 @@ public:
 
 	template <typename UserClass>
 	[[nodiscard]] static UserClass* GetModule(const FName& Name);
+
+	template<typename UserClass>
+	[[nodiscard]] static UserClass* GetActorOfClass(const UObject* WorldContextObject);
+
+	template<typename UserClass>
+	[[nodiscard]] static TArray<UserClass*> GetActorsOfClass(const UObject* WorldContextObject);
+
 #pragma region Checked
 	template <typename UserClass = AGameModeBase>
 	[[nodiscard]] static UserClass* GetGameMode_Checked(const UObject* ContextObject);
@@ -447,6 +457,27 @@ UserClass* UTCU_Library::GetModule(const FName& Name)
 {
 	IModuleInterface* Interface = FModuleManager::Get().GetModule(Name);
 	return Interface ? static_cast<UserClass*>(Interface) : nullptr;
+}
+
+template<typename UserClass>
+UserClass* UTCU_Library::GetActorOfClass(const UObject* WorldContextObject)
+{
+	AActor* Actor = UGameplayStatics::GetActorOfClass(WorldContextObject, UserClass::StaticClass());
+	auto* TypedActor = Cast<UserClass>(Actor);
+
+	return TypedActor;
+}
+
+template<typename UserClass>
+TArray<UserClass*> UTCU_Library::GetActorsOfClass(const UObject* WorldContextObject)
+{
+	TArray<AActor*> Actors;
+	UGameplayStatics::GetAllActorsOfClass(WorldContextObject, UserClass::StaticClass(), OUT Actors);
+
+	TArray<UserClass*> TypedActors;
+	TypedActors.Append(Actors);
+
+	return TypedActors;
 }
 
 #pragma region Checked

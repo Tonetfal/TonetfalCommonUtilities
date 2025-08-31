@@ -720,6 +720,16 @@ FUniqueNetIdRepl UTCU_Library::GetNetIdFromController(const APlayerController* C
 
 	return FUniqueNetIdRepl();
 }
+
+FUniqueNetIdRepl UTCU_Library::GetNetIdFromPawn(const APawn* Pawn)
+{
+	if (IsValid(Pawn) && IsValid(Pawn->GetPlayerState()))
+	{
+		return Pawn->GetPlayerState()->GetUniqueId();
+	}
+
+	return FUniqueNetIdRepl();
+}
 #pragma endregion
 
 #pragma region String
